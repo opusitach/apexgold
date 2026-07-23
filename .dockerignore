@@ -1,0 +1,27 @@
+# Keep the build context small, and — more importantly — keep the live leads
+# database and the real secrets out of the image.
+node_modules
+.next
+out
+build
+data
+.env
+.env.*
+!.env.example
+!.env.docker.example
+.git
+.gitignore
+.claude
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+**/.DS_Store
+npm-debug.log*
+Dockerfile
+.dockerignore
+docker-compose.yml
+Caddyfile
+README.md
+AGENTS.md
+CLAUDE.md

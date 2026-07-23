@@ -1,0 +1,65 @@
+# Production stack for apexgold.cz.
+#
+#   docker compose up -d --build
+#
+# Two services: `app` is the Next.js server (site, API routes, admin panel and
+# the SQLite file), `webserver` is Caddy terminating TLS in front of it. Only
+# Caddy publishes ports — the app is reachable solely over the internal network.
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Inlined into the client bundle at build time, so they belong here and
+        # not in env_file. Override via the shell or ./.env when they change.
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-G-0FLLG15T2E}
+        NEXT_PUBLIC_GOOGLE_ADS_ID: ${NEXT_PUBLIC_GOOGLE_ADS_ID:-}
+    image: apexgold-app
+    restart: unless-stopped
+    # Admin credentials and Telegram secrets — see .env.docker.example.
+    env_file:
+      - .env.docker
+    environment:
+      APEXGOLD_DB_PATH: /data/apexgold.db
+      TZ: Europe/Prague
+    volumes:
+      # The leads database. A bind mount so backups are a plain file copy;
+      # the directory must be owned by uid 1000 (the `node` user).
+      - ./data:/data
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - web
+
+  webserver:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Issued certificates live here — without these volumes every rebuild
+      # would request new ones and hit the Let's Encrypt rate limit.
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:

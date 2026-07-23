@@ -1,3 +1,12 @@
+# Hostnames are terminated here; `app` is the Next.js container on the compose
+# network (docker-compose.yml), which is never published to the host directly.
+
+# Optional: a contact address for the Let's Encrypt account. Certificates are
+# issued without it too — filling it in only adds expiry notices by email.
+# {
+# 	email you@example.com
+# }
+
 # Canonical host. Everything indexable lives on the bare domain; www is a
 # permanent redirect so the two hosts never compete as duplicate content.
 www.apexgold.cz {
@@ -5,13 +14,16 @@ www.apexgold.cz {
 }
 
 apexgold.cz {
-	reverse_proxy localhost:3000
+	encode zstd gzip
+	reverse_proxy app:3000
 }
 
 # Admin panel. Served by the same Next.js app under the /admin route; Caddy
 # maps the whole subdomain onto it and rewrites the root to /admin so that
 # https://admin.apexgold.cz opens the panel directly.
 admin.apexgold.cz {
+	encode zstd gzip
+
 	# The panel is already noindex, but this subdomain would otherwise serve the
 	# main site's permissive robots.txt — deny crawling at the host level.
 	handle /robots.txt {
@@ -20,5 +32,5 @@ Disallow: /" 200
 	}
 
 	rewrite / /admin
-	reverse_proxy localhost:3000
+	reverse_proxy app:3000
 }
