@@ -27,16 +27,16 @@ Docker Engine with the Compose plugin on the server, ports 80 and 443 open, and 
 
 ### 2. Environment variables
 
-Runtime secrets live in `.env.docker` (git-ignored, read by the `app` container):
+The `app` container reads `.env.local` — the same git-ignored file the setup scripts write, so nothing has to be copied around:
 
 ```bash
-cp .env.docker.example .env.docker
+cp .env.example .env.local
 node scripts/setup-admin.mjs
 ```
 
-`setup-admin.mjs` writes `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET` and `ADMIN_SESSION_SECRET` into `.env.local` — copy those four lines over into `.env.docker`. (It needs Node 24+ locally; it can also be run on your laptop and the values pasted in.)
+`setup-admin.mjs` fills in `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET` and `ADMIN_SESSION_SECRET` (it needs Node 24+; it can also be run on a laptop and the file copied to the server).
 
-`NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_GOOGLE_ADS_ID` do **not** belong in `.env.docker`: `next build` inlines them into the client bundle, so they are passed as build args in `docker-compose.yml`. To change them, export them in the shell (or put them in `./.env`) and rebuild.
+One exception: `NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_GOOGLE_ADS_ID` are inlined into the client bundle by `next build`, so setting them in `.env.local` does nothing for the container. They are passed as build args in `docker-compose.yml` — to change them, export them in the shell (or put them in `./.env`, which Compose reads for interpolation) and rebuild.
 
 ### 3. Database
 
@@ -68,7 +68,7 @@ Once, after the site is live on HTTPS:
 node scripts/setup-telegram.mjs https://apexgold.cz
 ```
 
-It writes `TELEGRAM_WEBHOOK_SECRET` into `.env.local` — copy it into `.env.docker` and run `docker compose up -d` again so the container picks it up.
+It writes `TELEGRAM_WEBHOOK_SECRET` into `.env.local`; run it from the deploy directory, then `docker compose up -d` again so the container picks the secret up.
 
 ### 6. Day-to-day
 
