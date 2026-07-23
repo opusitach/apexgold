@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the [Next.js](https://nextjs.org) project for [apexgold.cz](https://apexgold.cz).
 
 ## Getting Started
 
@@ -6,19 +6,39 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The site is localized (`app/[lang]/`) and the admin panel lives under `app/admin/` — see `proxy.ts` for how locales and the `/admin` route are resolved.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running the production server
+
+1. **Node version** — the app uses the built-in `node:sqlite` module, which requires **Node 24+**.
+
+2. **Environment variables** — copy `.env.example` to `.env.local` and fill in the admin credentials:
+
+   ```bash
+   cp .env.example .env.local
+   node scripts/setup-admin.mjs
+   ```
+
+   This generates `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET`, and `ADMIN_SESSION_SECRET` and writes them to `.env.local`. Also set `NEXT_PUBLIC_GA_ID` if analytics should be enabled. Leads are stored in a local SQLite file (defaults to `./data/apexgold.db`, overridable with `APEXGOLD_DB_PATH`) — make sure that path is writable and persisted across deploys.
+
+3. **Build and start**:
+
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+   `next start` serves the app on `localhost:3000` by default.
+
+4. **Reverse proxy** — in production, Caddy sits in front of the Node process and terminates TLS for both hosts (see `Caddyfile`):
+   - `apexgold.cz` (and the `www` redirect) proxy to `localhost:3000`.
+   - `admin.apexgold.cz` rewrites to `/admin` and proxies to the same app.
+
+   Keep the Node process running (e.g. with `pm2` or a `systemd` service) and reload Caddy after any config change with `caddy reload`.
 
 ## Learn More
 
@@ -26,11 +46,3 @@ To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

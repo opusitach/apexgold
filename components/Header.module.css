@@ -1,0 +1,268 @@
+.wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  font-family: var(--font-inter);
+  padding: 16px 20px 0;
+}
+
+.card {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: saturate(180%) blur(16px);
+  border: 1px solid rgba(200, 220, 200, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 6px 32px rgba(26, 32, 24, 0.09);
+}
+
+.row {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 14px 0 22px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  flex-shrink: 0;
+  z-index: 2;
+  color: var(--ink);
+}
+
+.logoImg {
+  height: 47px;
+  width: auto;
+  display: block;
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  flex: 1;
+  justify-content: center;
+}
+
+.navLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 8px 13px;
+  border-radius: 10px;
+}
+
+.navLink:hover {
+  background: #eef3ef;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.langWrap {
+  position: relative;
+}
+
+.langBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(14, 85, 64, 0.18);
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 6px 11px;
+  border-radius: 10px;
+  letter-spacing: 0.03em;
+}
+
+.flagImg {
+  border-radius: 50%;
+  display: block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.chevron {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.langMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  padding-top: 8px;
+  z-index: 70;
+}
+
+.langMenuInner {
+  background: #fff;
+  border: 1px solid rgba(14, 85, 64, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(14, 85, 64, 0.14);
+  padding: 6px;
+  min-width: 118px;
+}
+
+.langOption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.langOption.active {
+  font-weight: 700;
+  color: var(--pine);
+  background: #eef3ef;
+}
+
+.phone {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  background: var(--pine);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 11px 22px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(14, 85, 64, 0.22);
+}
+
+.cta:hover {
+  background: #0c6349;
+}
+
+.burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: #fff;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.mobilePanel {
+  border-top: 1px solid #e8e4da;
+  padding: 14px 20px 22px;
+}
+
+.mobileLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileLink {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 13px 8px;
+  border-bottom: 1px solid #ece9e0;
+}
+
+.mobileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.mobilePhone {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.mobileLangs {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mobileLangBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(14, 85, 64, 0.18);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mobileLangBtn.active {
+  font-weight: 700;
+  color: var(--pine);
+  background: #eef3ef;
+}
+
+.mobileCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  background: var(--pine);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 15px;
+  border-radius: 12px;
+}

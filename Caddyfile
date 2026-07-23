@@ -1,0 +1,24 @@
+# Canonical host. Everything indexable lives on the bare domain; www is a
+# permanent redirect so the two hosts never compete as duplicate content.
+www.apexgold.cz {
+	redir https://apexgold.cz{uri} permanent
+}
+
+apexgold.cz {
+	reverse_proxy localhost:3000
+}
+
+# Admin panel. Served by the same Next.js app under the /admin route; Caddy
+# maps the whole subdomain onto it and rewrites the root to /admin so that
+# https://admin.apexgold.cz opens the panel directly.
+admin.apexgold.cz {
+	# The panel is already noindex, but this subdomain would otherwise serve the
+	# main site's permissive robots.txt — deny crawling at the host level.
+	handle /robots.txt {
+		respond "User-agent: *
+Disallow: /" 200
+	}
+
+	rewrite / /admin
+	reverse_proxy localhost:3000
+}
