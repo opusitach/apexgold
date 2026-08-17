@@ -438,8 +438,8 @@ export default function ServicePage({ slug }: { slug: ServiceSlug }) {
           <div className="stagger">
             <div className={styles.priceCard}>
               <div className={styles.priceCardHead}>
-                <span className="name">{tr(d.crumb)}</span>
-                <span className="from">{t3("Ceny od", "Prices from", "Ceny od", "Ціни від")}</span>
+                <span className={styles.name}>{tr(d.crumb)}</span>
+                <span className={styles.from}>{t3("Ceny od", "Prices from", "Ceny od", "Ціни від")}</span>
               </div>
               <div className={styles.priceCardBody}>
                 {d.prices.map((p, i) =>
