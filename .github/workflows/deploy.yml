@@ -1,0 +1,100 @@
+name: Deploy
+
+# Every push to main redeploys apexgold.cz, but only after lint, types and a
+# production build pass on the runner — a broken commit never reaches the VPS.
+# workflow_dispatch is there to redeploy the current main without an empty
+# commit (e.g. after editing .env.local on the server).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Deploys are serialised: two overlapping `docker compose up --build` runs on
+# the same server would fight over the same containers. Queued runs are not
+# cancelled, so the newest commit always ends up deployed last.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Lint, types, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # Matches the Dockerfile: lib/db.ts uses the built-in node:sqlite
+          # module, stable only from Node 24.
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Next 16 no longer lints during `next build`, so this has to run on its own.
+      - name: ESLint
+        run: npm run lint
+
+      # tsconfig.json includes .next/types, which only exist after codegen —
+      # `next typegen` generates them without paying for a full build first.
+      - name: TypeScript
+        run: npx next typegen && npx tsc --noEmit
+
+      # Persisting .next/cache keeps the build off a cold start every run.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  deploy:
+    name: Deploy to VPS
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      # Only the deploy script is needed from the repo — the server pulls the
+      # code itself.
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/deploy-remote.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host keys instead of StrictHostKeyChecking=no: a runner that
+          # blindly trusts whatever answers on that IP can be pointed elsewhere.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_PORT || '22' }}
+          DEPLOY_PATH: ${{ vars.VPS_PATH || '/home/ubuntu/apexgold' }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" \
+            -o BatchMode=yes -o ConnectTimeout=15 \
+            "$VPS_USER@$VPS_HOST" \
+            "env DEPLOY_PATH='$DEPLOY_PATH' GIT_SHA='$GIT_SHA' bash -s" \
+            < scripts/deploy-remote.sh
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

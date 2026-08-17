@@ -27,14 +27,17 @@ Docker Engine with the Compose plugin on the server, ports 80 and 443 open, and 
 
 ### 2. Environment variables
 
-The `app` container reads `.env.local` — the same git-ignored file the setup scripts write, so nothing has to be copied around:
+The `app` container reads `.env.local` — the same git-ignored file the setup scripts write, so nothing has to be copied around. Generate the admin credentials **before** creating the file; `setup-admin.mjs` refuses to overwrite an existing `.env.local` and only prints the values instead:
 
 ```bash
-cp .env.example .env.local
 node scripts/setup-admin.mjs
 ```
 
-`setup-admin.mjs` fills in `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET` and `ADMIN_SESSION_SECRET` (it needs Node 24+; it can also be run on a laptop and the file copied to the server).
+That writes `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET` and `ADMIN_SESSION_SECRET`, and prints an `otpauth://` URL to add to an authenticator app. Append `TELEGRAM_BOT_TOKEN` to the same file by hand (see `.env.example` for the full list). The script needs Node 24+; on a server that only has Docker, run it in a throwaway container:
+
+```bash
+docker run --rm -v "$PWD:/app" -w /app --user "$(id -u):$(id -g)" node:24-alpine node scripts/setup-admin.mjs
+```
 
 One exception: `NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_GOOGLE_ADS_ID` are inlined into the client bundle by `next build`, so setting them in `.env.local` does nothing for the container. They are passed as build args in `docker-compose.yml` — to change them, export them in the shell (or put them in `./.env`, which Compose reads for interpolation) and rebuild.
 
@@ -68,7 +71,11 @@ Once, after the site is live on HTTPS:
 node scripts/setup-telegram.mjs https://apexgold.cz
 ```
 
-It writes `TELEGRAM_WEBHOOK_SECRET` into `.env.local`; run it from the deploy directory, then `docker compose up -d` again so the container picks the secret up.
+It appends `TELEGRAM_WEBHOOK_SECRET` to `.env.local` and registers the webhook with Telegram, so it has to run from the deploy directory against the live HTTPS domain. Then `docker compose up -d` again for the container to pick the secret up. Without Node on the server, the same container trick works:
+
+```bash
+docker run --rm -v "$PWD:/app" -w /app --user "$(id -u):$(id -g)" node:24-alpine node scripts/setup-telegram.mjs https://apexgold.cz
+```
 
 ### 6. Day-to-day
 
@@ -77,6 +84,62 @@ docker compose up -d --build
 ```
 
 redeploys after a `git pull`. `docker compose logs -f app` tails the app, and `docker compose restart webserver` reloads Caddy after editing the `Caddyfile`. Issued certificates persist in the `caddy_data` volume, so rebuilds do not re-request them.
+
+## Continuous deployment
+
+`.github/workflows/deploy.yml` runs that same day-to-day command for you on every push to `main` (and on demand via **Actions → Deploy → Run workflow**). It has two jobs:
+
+1. **Checks** — on a GitHub runner: `npm ci`, `npm run lint`, `next typegen && tsc --noEmit`, `npm run build`. Next 16 no longer lints during `next build`, so linting is a separate step. A failure here stops the run and the server is never touched.
+2. **Deploy** — SSH into the VPS and pipe `scripts/deploy-remote.sh` into `bash -s`. The script resets the working tree to the exact commit that triggered the run, rebuilds with `docker compose up -d --build`, waits for the `app` healthcheck, then prunes Docker.
+
+The image is still built **on the server** — see the `sharp` warning above. Deploys are serialised by a concurrency group, so two pushes in a row queue instead of colliding.
+
+### Disk hygiene
+
+Each rebuild leaves the previous image untagged and grows the BuildKit cache, which is unbounded by default — left alone, the VPS disk fills up after a few dozen deploys. After a successful deploy the script runs:
+
+```bash
+docker image prune --force && docker builder prune --force --filter until=168h
+```
+
+Untagged images go immediately; build cache is only dropped once it is a week old, so the next build still reuses the `npm ci` and `next build` layers. `--filter until=` is used rather than `--keep-storage`, which was renamed to `--max-used-space` in Docker 27 and would break on the other version. `docker system df` and `df -h` are printed at the end of every run, so the job log doubles as a disk-usage history.
+
+### Server prerequisites
+
+The SSH user must own the deploy directory, be able to run `docker` without `sudo` (member of the `docker` group), and be able to `git fetch origin` non-interactively — i.e. its own deploy key is already in `~/.ssh`.
+
+### GitHub secrets and variables
+
+Under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `VPS_HOST` | Server hostname or IP |
+| `VPS_USER` | SSH user that owns the deploy directory |
+| `VPS_SSH_KEY` | Private key, whole file including the `BEGIN`/`END` lines |
+| `VPS_KNOWN_HOSTS` | Output of `ssh-keyscan` for the server |
+
+Two optional **variables** (not secrets) override the defaults: `VPS_PORT` (default `22`) and `VPS_PATH` (default `/home/ubuntu/apexgold`, the deploy directory on the current EC2 host).
+
+Generate a dedicated key pair for Actions rather than reusing a personal one:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/apexgold_deploy -C "github-actions" -N ""
+```
+
+```bash
+ssh-copy-id -i ~/.ssh/apexgold_deploy.pub user@apexgold.cz
+```
+
+Then `cat ~/.ssh/apexgold_deploy` into `VPS_SSH_KEY`, and pin the host keys so the runner cannot be redirected to another machine:
+
+```bash
+ssh-keyscan -p 22 apexgold.cz
+```
+
+### When a deploy fails
+
+There is no automatic rollback. If the build fails the old containers keep serving — Compose never gets to recreate them. If the build succeeds but the new container never turns healthy, the job fails red with the last 60 log lines, and the site is down until it is fixed; recover by SSHing in and running `git reset --hard <previous-sha> && docker compose up -d --build`.
 
 ## Running without Docker
 
