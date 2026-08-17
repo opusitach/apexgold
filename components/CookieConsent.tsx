@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/i18n";
 import { getConsent, setConsent, hasConsent, onConsentChange } from "@/lib/consent";
+import { ensureGtag, updateConsentMode } from "@/lib/gtm";
 import { captureAttribution } from "@/lib/leadMeta";
 import { LEGAL_DOCS } from "@/lib/legalContent";
 import styles from "./CookieConsent.module.css";
@@ -11,17 +12,13 @@ import styles from "./CookieConsent.module.css";
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
-declare global {
-  interface Window {
-    dataLayer?: unknown[];
-    __apexAnalyticsLoaded?: boolean;
-  }
-}
-
 /**
  * Load Google Analytics + Google Ads only after consent. No-op unless the
  * corresponding NEXT_PUBLIC_* id is configured, so nothing third-party runs
  * until both an id exists and the visitor has accepted.
+ *
+ * Google Tag Manager is separate: it is always on the page and hears about the
+ * decision through updateConsentMode() instead — see lib/gtm.ts.
  */
 function loadAnalytics() {
   if (typeof window === "undefined" || window.__apexAnalyticsLoaded) return;
@@ -29,17 +26,8 @@ function loadAnalytics() {
   if (!id) return;
   window.__apexAnalyticsLoaded = true;
 
-  window.dataLayer = window.dataLayer || [];
-  function gtag(...args: unknown[]) {
-    window.dataLayer!.push(args);
-  }
+  const gtag = ensureGtag();
   gtag("js", new Date());
-  gtag("consent", "update", {
-    analytics_storage: "granted",
-    ad_storage: "granted",
-    ad_user_data: "granted",
-    ad_personalization: "granted",
-  });
   if (GA_ID) gtag("config", GA_ID);
   if (ADS_ID) gtag("config", ADS_ID);
 
@@ -81,12 +69,16 @@ export default function CookieConsent() {
   const accept = useCallback(() => {
     setConsent("granted");
     captureAttribution();
+    updateConsentMode("granted");
     loadAnalytics();
     setManualOpen(false);
   }, []);
 
   const reject = useCallback(() => {
     setConsent("denied");
+    // Consent Mode already defaults to denied; the explicit update is what
+    // releases tags waiting on wait_for_update instead of stalling them.
+    updateConsentMode("denied");
     setManualOpen(false);
   }, []);
 

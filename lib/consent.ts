@@ -4,9 +4,10 @@
 // (Google Analytics, Google Ads / GCLID, UTM attribution) may only be
 // collected once the visitor has actively accepted. Default is "denied".
 
+import { CONSENT_KEY as KEY } from "./gtm";
+
 export type ConsentValue = "granted" | "denied";
 
-const KEY = "apexgold-consent";
 const EVENT = "apexgold-consent-change";
 
 /** Returns the stored choice, or null if the visitor has not decided yet. */

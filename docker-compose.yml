@@ -15,6 +15,7 @@ services:
         # not in env_file. Override via the shell or ./.env when they change.
         NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-G-0FLLG15T2E}
         NEXT_PUBLIC_GOOGLE_ADS_ID: ${NEXT_PUBLIC_GOOGLE_ADS_ID:-}
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-GTM-5366ZLNG}
     image: apexgold-app
     restart: unless-stopped
     # Admin credentials and Telegram secrets. The same .env.local that

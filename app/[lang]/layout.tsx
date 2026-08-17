@@ -3,6 +3,7 @@ import { Hanken_Grotesk, Inter } from "next/font/google";
 import { notFound } from "next/navigation";
 import { LanguageProvider } from "@/lib/i18n";
 import CookieConsent from "@/components/CookieConsent";
+import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/GoogleTagManager";
 import { LOCALES, isLang, type Lang } from "@/lib/locales";
 import { SITE_URL, localeAlternates, socialMeta } from "@/lib/siteMeta";
 import "../globals.css";
@@ -71,7 +72,11 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} className={`${hanken.variable} ${inter.variable}`}>
+      <head>
+        <GoogleTagManagerScript />
+      </head>
       <body>
+        <GoogleTagManagerNoScript />
         <LanguageProvider lang={lang}>
           {children}
           <CookieConsent />

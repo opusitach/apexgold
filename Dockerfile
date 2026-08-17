@@ -22,8 +22,10 @@ WORKDIR /app
 # so they have to be present here — setting them at runtime does nothing.
 ARG NEXT_PUBLIC_GA_ID=""
 ARG NEXT_PUBLIC_GOOGLE_ADS_ID=""
+ARG NEXT_PUBLIC_GTM_ID=""
 ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID \
     NEXT_PUBLIC_GOOGLE_ADS_ID=$NEXT_PUBLIC_GOOGLE_ADS_ID \
+    NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID \
     NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules
