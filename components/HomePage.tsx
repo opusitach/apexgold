@@ -763,13 +763,13 @@ export default function HomePage() {
           <div className="form-outer">
             <div className={`stagger ${styles.formIntro}`}>
               <span className={styles.formKicker}>{t("Poptávka", "Request", "Dopyt", "Заявка")}</span>
-              <h2>{t("Řekněte nám o vašem objektu", "Tell us about your site", "Povedzte nám o vašom objekte", "Розкажіть про ваш об’єкт")}</h2>
+              <h2>{t("Nechte starosti s úklidem na nás.", "Leave the cleaning worries to us.", "Starosti s upratovaním nechajte na nás.", "Залиште турботи про прибирання нам.")}</h2>
               <p>
                 {t(
-                  "Vyplňte formulář. Manažer vás kontaktuje do jednoho pracovního dne a připraví přesnou kalkulaci.",
-                  "Fill in the form. A manager will contact you within a business day and prepare a precise estimate.",
-                  "Vyplňte formulár. Manažér vás kontaktuje do jedného pracovného dňa a pripraví presnú kalkuláciu.",
-                  "Заповніть форму. Менеджер зв’яжеться з вами протягом робочого дня і підготує точний розрахунок."
+                  "Vyplňte krátký formulář a my se postaráme o zbytek. Manažer si s vámi domluví termín návštěvy, zdarma přijede posoudit objekt a připraví přesnou kalkulaci podle skutečného rozsahu prací.",
+                  "Fill in a short form and we will take care of the rest. A manager will arrange a visit with you, come to assess the property free of charge and prepare an exact quote based on the actual scope of work.",
+                  "Vyplňte krátky formulár a my sa postaráme o zvyšok. Manažér si s vami dohodne termín návštevy, zdarma príde posúdiť objekt a pripraví presnú kalkuláciu podľa skutočného rozsahu prác.",
+                  "Заповніть коротку форму, а решту ми візьмемо на себе. Менеджер узгодить із вами час візиту, безкоштовно приїде оцінити об’єкт і підготує точний розрахунок відповідно до реального обсягу робіт."
                 )}
               </p>
               <div className={styles.contactList}>

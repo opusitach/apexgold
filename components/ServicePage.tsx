@@ -720,17 +720,17 @@ export default function ServicePage({ slug }: { slug: ServiceSlug }) {
         <div className="W">
           <div className="sp-formgrid">
             <div className={`stagger ${styles.formIntro}`}>
-              <span className={styles.formKicker}>{t3("Poptávka", "Request", "Dopyt", "Заявка")}</span>
-              <h2>
+              <span className={styles.formKicker}>
                 {t3("Poptávka: ", "Request: ", "Dopyt: ", "Заявка: ")}
                 {tr(d.crumb)}
-              </h2>
+              </span>
+              <h2>{t3("Nechte starosti s úklidem na nás.", "Leave the cleaning worries to us.", "Starosti s upratovaním nechajte na nás.", "Залиште турботи про прибирання нам.")}</h2>
               <p>
                 {t3(
-                  "Vyplňte formulář. Manažer vás kontaktuje do jednoho pracovního dne, domluví prohlídku a připraví přesnou kalkulaci zdarma.",
-                  "Fill in the form. A manager will contact you within one business day, arrange a survey and prepare an exact quote free of charge.",
-                  "Vyplňte formulár. Manažér vás kontaktuje do jedného pracovného dňa, dohodne obhliadku a pripraví presnú kalkuláciu zdarma.",
-                  "Заповніть форму. Менеджер зв’яжеться з вами протягом одного робочого дня, домовиться про огляд і безкоштовно підготує точний кошторис."
+                  "Vyplňte krátký formulář a my se postaráme o zbytek. Manažer si s vámi domluví termín návštěvy, zdarma přijede posoudit objekt a připraví přesnou kalkulaci podle skutečného rozsahu prací.",
+                  "Fill in a short form and we will take care of the rest. A manager will arrange a visit with you, come to assess the property free of charge and prepare an exact quote based on the actual scope of work.",
+                  "Vyplňte krátky formulár a my sa postaráme o zvyšok. Manažér si s vami dohodne termín návštevy, zdarma príde posúdiť objekt a pripraví presnú kalkuláciu podľa skutočného rozsahu prác.",
+                  "Заповніть коротку форму, а решту ми візьмемо на себе. Менеджер узгодить із вами час візиту, безкоштовно приїде оцінити об’єкт і підготує точний розрахунок відповідно до реального обсягу робіт."
                 )}
               </p>
               <div className={styles.contactList}>
