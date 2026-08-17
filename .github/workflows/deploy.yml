@@ -81,6 +81,17 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+          # A wrong VPS_SSH_KEY looks exactly like a key missing from the
+          # server: "Permission denied (publickey)". Print what actually landed
+          # in the secret so the two are told apart at a glance. Fingerprints
+          # are public information — the key itself is never echoed.
+          if head -1 ~/.ssh/deploy_key | grep -q 'BEGIN OPENSSH PRIVATE KEY'; then
+            echo "формат: приватный ключ OpenSSH, строк: $(wc -l < ~/.ssh/deploy_key)"
+          else
+            echo "ВНИМАНИЕ: VPS_SSH_KEY не похож на приватный ключ OpenSSH"
+          fi
+          ssh-keygen -lf ~/.ssh/deploy_key || echo "ключ не читается — вероятно, скопирован не целиком"
+
       - name: Deploy
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
