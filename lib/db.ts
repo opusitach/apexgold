@@ -55,7 +55,7 @@ export interface Lead {
   meta: Record<string, unknown>;
 }
 
-const DB_PATH =
+export const DB_PATH =
   process.env.APEXGOLD_DB_PATH ||
   path.join(process.cwd(), "data", "apexgold.db");
 
@@ -184,6 +184,19 @@ function rowToLead(row: LeadRow): Lead {
 
 const SELECT_COLS =
   "id, created_at, status, lang, company, name, phone, email, service, area, city, object_type, address, visit_date, comment, consent, is_test, meta";
+
+/**
+ * Storage liveness probe. Opens the database — creating the file and the
+ * schema on the first call — and takes a write lock without changing anything,
+ * so a database that cannot be written to (a bind mount the container has no
+ * permission on, a full disk) fails here instead of on a visitor's form.
+ * Throws the underlying SQLite error; see app/api/health/route.ts.
+ */
+export function assertDbWritable(): void {
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  db.exec("ROLLBACK");
+}
 
 /** Insert a new lead and return the stored record (with generated id). */
 export function createLead(input: LeadInput): Lead {

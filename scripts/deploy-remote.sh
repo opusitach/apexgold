@@ -34,6 +34,20 @@ git fetch --prune origin main
 git reset --hard "$GIT_SHA"
 git --no-pager log -1 --format='%h %s (%an, %ar)'
 
+# The leads database lives in ./data, bind-mounted into the container at /data.
+# If that directory does not exist, Docker creates it as root — and the app
+# runs as uid 1000 (`node`), so SQLite then fails with "unable to open database
+# file" on every submitted form while the container still looks healthy.
+# Creating it here means it belongs to the deploy user instead.
+echo "--- checking the database directory ---"
+mkdir -p data
+data_uid="$(stat -c '%u' data)"
+if [ "$data_uid" != "1000" ]; then
+  echo "./data is owned by uid $data_uid, but the container writes to it as uid 1000." >&2
+  echo "Fix it on the server once:  sudo chown -R 1000:1000 $DEPLOY_PATH/data" >&2
+  exit 1
+fi
+
 echo "--- rebuilding and restarting containers ---"
 # The image is built on the server on purpose: it bakes in platform-specific
 # sharp binaries (see README). --remove-orphans drops containers left behind by

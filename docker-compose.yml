@@ -32,6 +32,14 @@ services:
       - ./data:/data
     expose:
       - "3000"
+    # Container logs are a diagnostic trail, not storage — every lead is also
+    # written to data/leads.jsonl, which is never rotated. Capped so a noisy
+    # week cannot fill the disk the database lives on.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s

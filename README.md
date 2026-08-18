@@ -55,6 +55,16 @@ sudo chown -R 1000:1000 /srv/apexgold/data
 
 A backup is a plain copy of that directory.
 
+#### The lead journal
+
+Every submission is also appended to `data/leads.jsonl` (one JSON object per line) *before* the insert into SQLite is attempted, so an application survives even when the database refuses writes or the Telegram delivery fails. Three event types are written: `received` (the full submission), `stored` (the id it got) and `failed` (why it did not make it). The app never rotates or prunes this file — container logs are rotated, this is the durable trail. It holds the same personal data as the database and lives in the same directory, so the backup above already covers it.
+
+Applications that never reached the database — what to re-enter by hand after an outage:
+
+```bash
+jq -s '(map(select(.event=="stored").ref)) as $ok | map(select(.event=="received" and (.ref | IN($ok[]) | not)))' data/leads.jsonl
+```
+
 ### 4. Build and run
 
 ```bash
@@ -107,6 +117,8 @@ Untagged images go immediately; build cache is only dropped once it is a week ol
 ### Server prerequisites
 
 The SSH user must own the deploy directory, be able to run `docker` without `sudo` (member of the `docker` group), and be able to `git fetch origin` non-interactively — i.e. its own deploy key is already in `~/.ssh`.
+
+It must also own `data/`, the bind mount that holds the leads database, with **uid 1000** — the `node` user the container runs as. Docker creates a missing bind-mount source as `root`, and the app then cannot create the database at all: every form submission answers 500 while the container itself keeps serving pages. The deploy script creates the directory before Compose can and refuses to deploy when the owner is wrong; if it ever is, fix it once with `sudo chown -R 1000:1000 <deploy path>/data`. `/api/health` takes a write lock on the database, so this failure now turns the container unhealthy and fails the deploy instead of surfacing as lost applications.
 
 ### GitHub secrets and variables
 

@@ -3,6 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createLead, listLeads, type LeadInput } from "@/lib/db";
 import { SESSION_COOKIE, verifySession } from "@/lib/adminAuth";
 import { notifyLeadToTelegram } from "@/lib/telegram";
+import {
+  journalLeadFailed,
+  journalLeadReceived,
+  journalLeadStored,
+} from "@/lib/leadJournal";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +30,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const lead = createLead(body);
+  // Journal the submission before touching the database: whatever fails from
+  // here on, the application itself is already on disk (see lib/leadJournal.ts).
+  const ref = journalLeadReceived(body);
+
+  let lead;
+  try {
+    lead = createLead(body);
+  } catch (err) {
+    // Storage is down (unwritable database file, full disk). The lead is not
+    // lost — it is in the journal — so answer with a status the form
+    // understands: it keeps the filled-in fields and asks the visitor to retry
+    // or call.
+    console.error("Storing a lead failed", err);
+    journalLeadFailed(ref, err);
+    return NextResponse.json(
+      { error: "Could not store the application" },
+      { status: 503 },
+    );
+  }
+  journalLeadStored(ref, lead.id);
 
   // Fire-and-forget: Telegram delivery must never delay or break the
   // response the visitor is waiting on.
