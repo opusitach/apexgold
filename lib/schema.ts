@@ -26,7 +26,10 @@ const TELEPHONE = `+${COMPANY.phone.replace(/\D/g, "")}`;
 
 export function localBusinessNode() {
   return {
-    "@type": "LocalBusiness",
+    // The trades we sell (cleaning, floor restoration) are a HomeAndConstruction
+    // business, but the generic LocalBusiness type is what consumers key off, so
+    // both are declared rather than picking one.
+    "@type": ["LocalBusiness", "HomeAndConstructionBusiness"],
     "@id": BUSINESS_ID,
     name: `${COMPANY.name} ${COMPANY.legalForm}`,
     url: `${SITE_URL}/`,
@@ -34,7 +37,15 @@ export function localBusinessNode() {
     email: COMPANY.email,
     image: `${SITE_URL}/images/og-default.jpg`,
     logo: `${SITE_URL}/images/logo.svg`,
-    vatID: COMPANY.ico,
+    // IČO is a company registration number, not a VAT id — `vatID` would be the
+    // DIČ (CZ + IČO) and only once the company is VAT-registered. Publishing it
+    // as a named identifier is what lets Google tie the site to the entry in the
+    // commercial register.
+    identifier: {
+      "@type": "PropertyValue",
+      propertyID: "ICO",
+      value: COMPANY.ico,
+    },
     address: {
       "@type": "PostalAddress",
       streetAddress: "Sarajevská 1051/10",

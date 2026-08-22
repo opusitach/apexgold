@@ -5,7 +5,7 @@ import { LanguageProvider } from "@/lib/i18n";
 import CookieConsent from "@/components/CookieConsent";
 import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/GoogleTagManager";
 import { LOCALES, isLang, type Lang } from "@/lib/locales";
-import { SITE_URL, localeAlternates, socialMeta } from "@/lib/siteMeta";
+import { SITE_URL, localeAlternates, socialMeta, verificationMeta } from "@/lib/siteMeta";
 import "../globals.css";
 
 const hanken = Hanken_Grotesk({
@@ -56,6 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     title: m.title,
     description: m.description,
     alternates: localeAlternates(l, ""),
+    ...verificationMeta(),
     ...socialMeta({ lang: l, path: "", title: m.title, description: m.description }),
   };
 }

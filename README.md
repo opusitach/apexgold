@@ -153,6 +153,41 @@ ssh-keyscan -p 22 apexgold.cz
 
 There is no automatic rollback. If the build fails the old containers keep serving — Compose never gets to recreate them. If the build succeeds but the new container never turns healthy, the job fails red with the last 60 log lines, and the site is down until it is fixed; recover by SSHing in and running `git reset --hard <previous-sha> && docker compose up -d --build`.
 
+## Search engines
+
+Everything a crawler needs is generated from the page data, so there is nothing to maintain by hand:
+
+- `app/robots.ts` → `/robots.txt`, allowing everything except `/admin` and `/api/`, and pointing at the sitemap. `admin.apexgold.cz` serves its own `Disallow: /` from the `Caddyfile`.
+- `app/sitemap.ts` → `/sitemap.xml`: 13 pages × 4 locales, each with its `hreflang` alternates and the photos that page renders (Google Images crawls those). Its `lastmod` comes from the `CONTENT_REVISED` constant — **bump it when the copy actually changes**, not on every deploy, or search engines learn to ignore the field.
+- `lib/siteMeta.ts` → canonical URL, `hreflang`, Open Graph and Twitter cards for every page.
+- `lib/schema.ts` → the JSON-LD graph (`LocalBusiness`, `WebSite`, `Service`, `Offer`, `FAQPage`, `BreadcrumbList`), all pointing at one business entity by `@id`.
+
+### Verifying ownership in the search consoles
+
+Google is verified through a DNS `TXT` record on `apexgold.cz`. Seznam and Bing want a `<meta>` tag: paste the `content=` value into `SITE_VERIFICATION` in `lib/siteMeta.ts` and deploy — the pages are prerendered, so the tag only appears after a rebuild. An empty value emits no tag at all.
+
+Then submit `https://apexgold.cz/sitemap.xml` in each console:
+
+| Console | Where |
+| --- | --- |
+| Google Search Console | Sitemaps → Add a new sitemap |
+| Seznam Webmaster | `search.seznam.cz/wmt` → Sitemapy |
+| Bing Webmaster Tools | importable in one click from Search Console |
+
+### IndexNow
+
+Bing, Seznam and Yandex accept a push notification instead of waiting for a crawl (Google does not participate). Ownership is proved by `public/<key>.txt`, which contains exactly the key that names it — it must be deployed before a submission is accepted.
+
+```bash
+npm run indexnow
+```
+
+That reads the key, fetches the live `sitemap.xml` and submits every URL. Run it after a deploy that adds or rewrites pages; it is pointless for an unchanged site and repeated submissions of the same URLs are a good way to get throttled. To rotate the key, delete the old file and create a new pair:
+
+```bash
+KEY=$(openssl rand -hex 16); printf %s "$KEY" > public/$KEY.txt
+```
+
 ## Running without Docker
 
 The app also runs as a plain Node process — `npm run build && npm run start` on **Node 24+**, with the same environment variables in `.env.local` and a reverse proxy in front (change `app:3000` back to `localhost:3000` in the `Caddyfile`).

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { SERVICE_SLUGS } from "@/lib/servicePageData";
+import { SERVICE_SLUGS, servicePageData, type ServiceSlug } from "@/lib/servicePageData";
 import { LEGAL_DOCS } from "@/lib/legalContent";
 import { LEGAL_EFFECTIVE_DATE } from "@/lib/company";
 import { LOCALES } from "@/lib/locales";
@@ -10,7 +10,7 @@ import { SITE_URL } from "@/lib/siteMeta";
  * just now" on each build, which search engines learn to ignore — bump the
  * entry here when the copy for that page group actually changes.
  */
-const CONTENT_REVISED = "2026-07-23";
+const CONTENT_REVISED = "2026-08-22";
 
 function alternates(path: string) {
   return {
@@ -20,6 +20,32 @@ function alternates(path: string) {
     },
   };
 }
+
+/** Sitemap images must be absolute; the page data stores /public-relative paths. */
+function absolute(paths: string[]): string[] {
+  return [...new Set(paths)].map((p) => `${SITE_URL}${p}`);
+}
+
+/**
+ * The photos a service page actually renders: its hero and the before/after
+ * gallery. Listing them lets Google Images crawl work that would otherwise only
+ * be reachable through a client component.
+ */
+function serviceImages(slug: ServiceSlug): string[] {
+  const d = servicePageData[slug];
+  const gallery = (d.gallery ?? []).flatMap((item) =>
+    item.type === "before-after" ? [item.before, item.after] : item.images
+  );
+  return absolute([d.img, ...gallery]);
+}
+
+const HOME_IMAGES = absolute([
+  "/images/hero-team.jpg",
+  "/images/case-before.jpg",
+  "/images/case-after.jpg",
+  "/images/services/generalni-uklid.jpg",
+  "/images/stone-renovation-floor.jpg",
+]);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const contentModified = new Date(CONTENT_REVISED);
@@ -31,6 +57,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "weekly" as const,
     priority: 1,
     alternates: alternates(""),
+    images: HOME_IMAGES,
   }));
 
   const services: MetadataRoute.Sitemap = LOCALES.flatMap((l) =>
@@ -40,6 +67,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.8,
       alternates: alternates(`/${slug}`),
+      images: serviceImages(slug),
     }))
   );
 
