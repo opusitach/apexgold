@@ -468,91 +468,65 @@
   max-width: 440px;
 }
 
-.caseSlider {
-  position: relative;
+.galCard {
+  background: #fff;
+  border: 1px solid rgba(14, 85, 64, 0.12);
   border-radius: 16px;
-  overflow: hidden;
-  aspect-ratio: 16 / 10;
-  cursor: col-resize;
-  user-select: none;
-  -webkit-user-select: none;
-  box-shadow: 0 4px 24px rgba(14, 85, 64, 0.12);
+  padding: 14px;
 }
 
-.caseSlider img {
-  position: absolute;
-  inset: 0;
+.galPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.galImg {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e8ede8;
+}
+
+.galImg img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
   display: block;
-  pointer-events: none;
 }
 
-.caseBeforeClip {
+.galLabel {
   position: absolute;
-  inset: 0;
-  will-change: clip-path;
-}
-
-.caseDivider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #fff;
-  transform: translateX(-50%);
-  box-shadow: 0 0 12px rgba(14, 85, 64, 0.3);
-  will-change: left;
-}
-
-.caseHandle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 4px 18px rgba(14, 85, 64, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: col-resize;
-  border: 2.5px solid var(--pine);
-}
-
-.caseLabel {
-  position: absolute;
-  top: 14px;
+  top: 10px;
+  left: 10px;
   background: rgba(20, 28, 22, 0.72);
   color: #fff;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  padding: 6px 13px;
+  padding: 5px 11px;
   border-radius: 999px;
   pointer-events: none;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 
-.caseLabelAfter {
-  position: absolute;
-  top: 14px;
-  right: 16px;
+.galLabelAfter {
+  composes: galLabel;
   background: var(--pine);
-  color: #fff;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 6px 13px;
-  border-radius: 999px;
-  pointer-events: none;
+}
+
+.galCaption {
+  font-size: 12.5px;
+  color: #8a968a;
+  margin: 16px 0 0;
+}
+
+@media (max-width: 600px) {
+  .galPair {
+    grid-template-columns: 1fr;
+  }
 }
 
 .reviewsHead {

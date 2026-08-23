@@ -105,8 +105,6 @@ const SERVICE_OPTIONS = [
 export default function HomePage() {
   const { t, lang } = useLang();
   const rootRef = useReveal<HTMLDivElement>();
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const [sliderPct, setSliderPct] = useState(50);
   const [marqPaused, setMarqPaused] = useState(false);
 
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -157,32 +155,6 @@ export default function HomePage() {
     (key: keyof FormErrors) => () => setTouched((t) => ({ ...t, [key]: true })),
     []
   );
-
-  function startSlider(clientX: number) {
-    function move(x: number) {
-      const rect = sliderRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const pct = Math.max(4, Math.min(96, ((x - rect.left) / rect.width) * 100));
-      setSliderPct(pct);
-    }
-    function onMouseMove(e: MouseEvent) {
-      move(e.clientX);
-    }
-    function onTouchMove(e: TouchEvent) {
-      if (e.touches[0]) move(e.touches[0].clientX);
-    }
-    function up() {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", up);
-      document.removeEventListener("touchmove", onTouchMove);
-      document.removeEventListener("touchend", up);
-    }
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", up);
-    document.addEventListener("touchmove", onTouchMove, { passive: false });
-    document.addEventListener("touchend", up);
-    move(clientX);
-  }
 
   function validate(): FormErrors {
     const req = t("Povinné pole", "Required", "Povinné pole", "Обов’язкове поле");
@@ -660,58 +632,49 @@ export default function HomePage() {
       <section className="sec" style={{ background: "#F4F8F5" }}>
         <div className="W">
           <div className={`stagger ${styles.sectionHead}`}>
-            <span className="eyebrow">{t("Případová studie", "Case study", "Prípadová štúdia", "Кейс")}</span>
-            <h2>{t("Úklid kuchyně po rekonstrukci", "Kitchen renovation cleanup", "Upratovanie kuchyne po rekonštrukcii", "Прибирання кухні після ремонту")}</h2>
+            <span className="eyebrow">{t("Výsledky", "Results", "Výsledky", "Результати")}</span>
+            <h2>{t("Před a po", "Before and after", "Pred a po", "До і після")}</h2>
           </div>
-          <div
-            className={`stagger ${styles.caseSlider}`}
-            ref={sliderRef}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              startSlider(e.clientX);
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              startSlider(e.touches[0].clientX);
-            }}
-          >
-            <Image
-              src="/images/case-after.jpg"
-              alt={t(
-                "Kuchyně po generálním úklidu po rekonstrukci",
-                "Kitchen after a post-renovation deep clean",
-                "Kuchyňa po generálnom upratovaní po rekonštrukcii",
-                "Кухня після генерального прибирання після ремонту"
-              )}
-              fill
-              sizes="(max-width: 1000px) 100vw, 1100px"
-            />
-            <div className={styles.caseBeforeClip} style={{ clipPath: `inset(0 ${100 - sliderPct}% 0 0)` }}>
-              <Image
-                src="/images/case-before.jpg"
-                alt={t(
-                  "Kuchyně před úklidem, se stavebním prachem po rekonstrukci",
-                  "Kitchen before cleaning, covered in construction dust",
-                  "Kuchyňa pred upratovaním, so stavebným prachom po rekonštrukcii",
-                  "Кухня до прибирання, з будівельним пилом після ремонту"
-                )}
-                fill
-                sizes="(max-width: 1000px) 100vw, 1100px"
-              />
-            </div>
-            <div className={styles.caseDivider} style={{ left: `${sliderPct}%` }}>
-              <div className={styles.caseHandle}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E5540" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 4L4 12l5 8" />
-                  <path d="M15 4l5 8-5 8" />
-                </svg>
+          <div className={`stagger ${styles.galCard}`}>
+            <div className={`sp-gal-pair ${styles.galPair}`}>
+              <div className={styles.galImg}>
+                <Image
+                  src="/images/cases_for_pages/uklid_po_stavbe_do.jpg"
+                  alt={t(
+                    "Obchodní prostor před úklidem po stavbě, se stavebním prachem a sutí",
+                    "Retail space before post-construction cleaning, covered in dust and debris",
+                    "Obchodný priestor pred upratovaním po stavbe, so stavebným prachom a sutinou",
+                    "Торгове приміщення до прибирання після будівництва, з будівельним пилом і сміттям"
+                  )}
+                  fill
+                  sizes="(max-width: 1000px) 100vw, 550px"
+                />
+                <span className={styles.galLabel}>{t("Před", "Before", "Pred", "До")}</span>
+              </div>
+              <div className={styles.galImg}>
+                <Image
+                  src="/images/cases_for_pages/uklid_po_stavbe_po.jpg"
+                  alt={t(
+                    "Obchodní prostor po úklidu po stavbě, s vyleštěnou podlahou",
+                    "Retail space after post-construction cleaning, with a polished floor",
+                    "Obchodný priestor po upratovaní po stavbe, s vyleštenou podlahou",
+                    "Торгове приміщення після прибирання після будівництва, з відполірованою підлогою"
+                  )}
+                  fill
+                  sizes="(max-width: 1000px) 100vw, 550px"
+                />
+                <span className={styles.galLabelAfter}>{t("Po", "After", "Po", "Після")}</span>
               </div>
             </div>
-            <span className={styles.caseLabel} style={{ left: 16 }}>
-              {t("Před", "Before", "Pred", "До")}
-            </span>
-            <span className={styles.caseLabelAfter}>{t("Po", "After", "Po", "Після")}</span>
           </div>
+          <p className={`stagger ${styles.galCaption}`}>
+            {t(
+              "Fotografie z realizací průběžně doplňujeme. Fotoreport z vlastní zakázky obdrží každý klient.",
+              "We continuously add photos from completed jobs. Every client receives a photo report from their own project.",
+              "Fotografie z realizácií priebežne dopĺňame. Fotoreport z vlastnej zákazky dostane každý klient.",
+              "Фотографії з виконаних робіт постійно доповнюємо. Фотозвіт з власного замовлення отримує кожен клієнт."
+            )}
+          </p>
         </div>
       </section>
 
@@ -793,7 +756,7 @@ export default function HomePage() {
                   </span>
                   <div>
                     <div className={styles.contactLabel}>E-mail</div>
-                    <a href="mailto:info@apexgold.cz" className={styles.contactValue} style={{ color: "#C5E8D6" }}>info@apexgold.cz</a>
+                    <a href="mailto:poptavky@apexgold.cz" className={styles.contactValue} style={{ color: "#C5E8D6" }}>poptavky@apexgold.cz</a>
                   </div>
                 </div>
                 <div className={styles.contactItem}>
