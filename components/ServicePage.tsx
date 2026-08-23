@@ -754,7 +754,7 @@ export default function ServicePage({ slug }: { slug: ServiceSlug }) {
                   </span>
                   <div>
                     <div className={styles.contactLabel}>E-mail</div>
-                    <a href="mailto:info@apexgold.cz" className={styles.contactValue} style={{ color: "#C5E8D6" }}>info@apexgold.cz</a>
+                    <a href="mailto:poptavky@apexgold.cz" className={styles.contactValue} style={{ color: "#C5E8D6" }}>poptavky@apexgold.cz</a>
                   </div>
                 </div>
                 <div className={styles.contactItem}>
