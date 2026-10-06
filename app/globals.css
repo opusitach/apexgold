@@ -7,8 +7,8 @@
   --ink: #15201b;
   --hairline: rgba(14, 85, 64, 0.14);
   --gold: #c4882a;
-  --font-hanken: "Hanken Grotesk", system-ui, sans-serif;
-  --font-inter: "Inter", system-ui, sans-serif;
+  --font-hanken: "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-inter: "Inter Variable", system-ui, sans-serif;
 }
 
 * {

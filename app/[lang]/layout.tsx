@@ -1,24 +1,16 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, Inter } from "next/font/google";
 import { notFound } from "next/navigation";
 import { LanguageProvider } from "@/lib/i18n";
 import CookieConsent from "@/components/CookieConsent";
 import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/GoogleTagManager";
 import { LOCALES, isLang, type Lang } from "@/lib/locales";
 import { SITE_URL, localeAlternates, socialMeta, verificationMeta } from "@/lib/siteMeta";
+// Fonts ship from node_modules rather than next/font/google: Turbopack fails the
+// build whenever Google Fonts answers with query-string font URLs, so the build
+// must not depend on fonts.googleapis.com at all.
+import "@fontsource-variable/hanken-grotesk/wght.css";
+import "@fontsource-variable/inter/wght.css";
 import "../globals.css";
-
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400", "500", "600"],
-});
 
 export function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }));
@@ -72,7 +64,7 @@ export default async function RootLayout({
   if (!isLang(lang)) notFound();
 
   return (
-    <html lang={lang} className={`${hanken.variable} ${inter.variable}`}>
+    <html lang={lang}>
       <head>
         <GoogleTagManagerScript />
       </head>
