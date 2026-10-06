@@ -453,15 +453,6 @@ button {
   .proc-steps {
     grid-template-columns: 1fr !important;
   }
-  .proc-step {
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  .proc-step > div:first-child {
-    flex-shrink: 0;
-  }
   .hero-scrim-left {
     background: none !important;
   }

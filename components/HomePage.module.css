@@ -960,9 +960,24 @@
     grid-template-columns: 1fr;
   }
   .procStep {
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    column-gap: 16px;
+    align-items: start;
+  }
+  .procBadge {
+    grid-row: 1 / span 2;
+    margin-bottom: 0;
+  }
+  .procStep h3 {
+    line-height: 1;
+  }
+  .procStep p {
+    margin-top: 8px;
+  }
+  .sectionHead {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 }

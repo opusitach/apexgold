@@ -215,6 +215,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-top: 16px;
 }
 
@@ -223,34 +224,7 @@
   font-weight: 700;
   color: var(--ink);
   text-decoration: none;
-}
-
-.mobileLangs {
-  display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.mobileLangBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(14, 85, 64, 0.18);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12.5px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: #fff;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.mobileLangBtn.active {
-  font-weight: 700;
-  color: var(--pine);
-  background: #eef3ef;
+  white-space: nowrap;
 }
 
 .mobileCta {

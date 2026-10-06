@@ -13,21 +13,60 @@ interface HeaderProps {
   noForm?: boolean;
 }
 
-export default function Header({ base = "", noForm = false }: HeaderProps) {
-  const { lang, setLang, t } = useLang();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
+function LangSelect({ lang, onChoose }: { lang: Lang; onChoose: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) {
-        setLangOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
       }
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  function choose(l: Lang) {
+    onChoose(l);
+    setOpen(false);
+  }
+
+  return (
+    <div className={styles.langWrap} ref={ref}>
+      <button type="button" className={styles.langBtn} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- tiny inline SVG data URI, not a photo */}
+        <img src={flagDataUri(lang)} width={18} height={18} alt="" className={styles.flagImg} />
+        {LANG_LABELS[lang]}
+        <svg width="11" height="11" viewBox="0 0 12 12" className={styles.chevron}>
+          <path d="M2 4 L6 8 L10 4" stroke="#15201B" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.langMenu}>
+          <div className={styles.langMenuInner}>
+            {LANG_ORDER.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => choose(l)}
+                className={`${styles.langOption} ${l === lang ? styles.active : ""}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- tiny inline SVG data URI, not a photo */}
+                <img src={flagDataUri(l)} width={18} height={18} alt="" className={styles.flagImg} />
+                {LANG_LABELS[l]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Header({ base = "", noForm = false }: HeaderProps) {
+  const { lang, setLang, t } = useLang();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // On a service sub-page (base="/") cross-page anchors must point back to the localized homepage.
   const anchorBase = base ? `/${lang}` : "";
@@ -44,11 +83,6 @@ export default function Header({ base = "", noForm = false }: HeaderProps) {
   const navProcess = t("Postup", "Process", "Postup", "Процес");
   const navReviews = t("Recenze", "Reviews", "Recenzie", "Відгуки");
   const cta = t("Získat nabídku", "Get a quote", "Získať ponuku", "Отримати розрахунок");
-
-  function chooseLang(l: Lang) {
-    setLang(l);
-    setLangOpen(false);
-  }
 
   return (
     <div className={styles.wrap}>
@@ -76,34 +110,7 @@ export default function Header({ base = "", noForm = false }: HeaderProps) {
           </nav>
 
           <div className={`apex-deskright ${styles.right}`}>
-            <div className={styles.langWrap} ref={langRef}>
-              <button type="button" className={styles.langBtn} onClick={() => setLangOpen((v) => !v)}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- tiny inline SVG data URI, not a photo */}
-                <img src={flagDataUri(lang)} width={18} height={18} alt="" className={styles.flagImg} />
-                {LANG_LABELS[lang]}
-                <svg width="11" height="11" viewBox="0 0 12 12" className={styles.chevron}>
-                  <path d="M2 4 L6 8 L10 4" stroke="#15201B" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {langOpen && (
-                <div className={styles.langMenu}>
-                  <div className={styles.langMenuInner}>
-                    {LANG_ORDER.map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        onClick={() => chooseLang(l)}
-                        className={`${styles.langOption} ${l === lang ? styles.active : ""}`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element -- tiny inline SVG data URI, not a photo */}
-                        <img src={flagDataUri(l)} width={18} height={18} alt="" className={styles.flagImg} />
-                        {LANG_LABELS[l]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <LangSelect lang={lang} onChoose={setLang} />
             <a href="tel:+420775391773" className={`apex-phone ${styles.phone}`}>
               {COMPANY.phone}
             </a>
@@ -146,20 +153,7 @@ export default function Header({ base = "", noForm = false }: HeaderProps) {
               <a href="tel:+420775391773" className={styles.mobilePhone}>
                 {COMPANY.phone}
               </a>
-              <div className={styles.mobileLangs}>
-                {LANG_ORDER.map((l) => (
-                  <button
-                    key={l}
-                    type="button"
-                    onClick={() => chooseLang(l)}
-                    className={`${styles.mobileLangBtn} ${l === lang ? styles.active : ""}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- tiny inline SVG data URI, not a photo */}
-                    <img src={flagDataUri(l)} width={16} height={16} alt="" className={styles.flagImg} />
-                    {LANG_LABELS[l]}
-                  </button>
-                ))}
-              </div>
+              <LangSelect lang={lang} onChoose={setLang} />
             </div>
             <a href={hrefRequest} onClick={() => setMobileOpen(false)} className={styles.mobileCta}>
               {cta}
