@@ -490,7 +490,7 @@ export default function ServicePage({ slug }: { slug: ServiceSlug }) {
                   "Nechajte nám telefón. Manažér sa ozve, dohodne obhliadku a pripraví presnú ponuku. Alebo volajte priamo: ",
                   "Залиште нам телефон. Менеджер зателефонує, домовиться про огляд і підготує точну пропозицію. Або телефонуйте напряму: "
                 )}
-                <a href="tel:+420775052281">{COMPANY.phone}</a>
+                <a href="tel:+420775391773">{COMPANY.phone}</a>
               </p>
             </div>
             {cbStatus === "form" ? (
@@ -742,7 +742,7 @@ export default function ServicePage({ slug }: { slug: ServiceSlug }) {
                   </span>
                   <div>
                     <div className={styles.contactLabel}>{t3("Telefon", "Phone", "Telefón", "Телефон")}</div>
-                    <a href="tel:+420775052281" className={styles.contactValue}>{COMPANY.phone}</a>
+                    <a href="tel:+420775391773" className={styles.contactValue}>{COMPANY.phone}</a>
                   </div>
                 </div>
                 <div className={styles.contactItem}>

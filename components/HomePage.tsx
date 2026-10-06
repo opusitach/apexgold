@@ -744,7 +744,7 @@ export default function HomePage() {
                   </span>
                   <div>
                     <div className={styles.contactLabel}>{t("Telefon", "Phone", "Telefón", "Телефон")}</div>
-                    <a href="tel:+420775052281" className={styles.contactValue}>{COMPANY.phone}</a>
+                    <a href="tel:+420775391773" className={styles.contactValue}>{COMPANY.phone}</a>
                   </div>
                 </div>
                 <div className={styles.contactItem}>

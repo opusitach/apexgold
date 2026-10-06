@@ -14,7 +14,7 @@ export const COMPANY = {
   contactAddress: "Sarajevská 1051/10, Vinohrady, 120 00 Praha 2",
   /** Address for data-subject requests. */
   email: "poptavky@apexgold.cz",
-  phone: "+420 775 052 281",
+  phone: "+420 775 391 773",
   /** Supervisory authority for GDPR complaints in the Czech Republic. */
   authority: "Úřad pro ochranu osobních údajů (ÚOOÚ), Pplk. Sochora 27, 170 00 Praha 7, uoou.gov.cz",
 } as const;

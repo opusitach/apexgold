@@ -114,7 +114,7 @@ export default function Footer({ base = "", noForm = false }: FooterProps) {
           <div>
             <div className={styles.colTitle}>{colContacts}</div>
             <div className={styles.contact}>
-              <a href="tel:+420775052281">{COMPANY.phone}</a>
+              <a href="tel:+420775391773">{COMPANY.phone}</a>
               <a href="mailto:poptavky@apexgold.cz">poptavky@apexgold.cz</a>
               <span>{address}</span>
               <span>{hours}</span>

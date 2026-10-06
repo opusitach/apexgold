@@ -104,7 +104,7 @@ export default function Header({ base = "", noForm = false }: HeaderProps) {
                 </div>
               )}
             </div>
-            <a href="tel:+420775052281" className={`apex-phone ${styles.phone}`}>
+            <a href="tel:+420775391773" className={`apex-phone ${styles.phone}`}>
               {COMPANY.phone}
             </a>
             <a href={hrefRequest} className={styles.cta}>
@@ -143,7 +143,7 @@ export default function Header({ base = "", noForm = false }: HeaderProps) {
               </a>
             </div>
             <div className={styles.mobileRow}>
-              <a href="tel:+420775052281" className={styles.mobilePhone}>
+              <a href="tel:+420775391773" className={styles.mobilePhone}>
                 {COMPANY.phone}
               </a>
               <div className={styles.mobileLangs}>
