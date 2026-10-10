@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/i18n";
 import { getConsent, setConsent, hasConsent, onConsentChange } from "@/lib/consent";
-import { ensureGtag, updateConsentMode } from "@/lib/gtm";
-import { captureAttribution } from "@/lib/leadMeta";
+import { clearGoogleStorage, ensureGtag, loadGtm, updateConsentMode } from "@/lib/gtm";
+import { captureAttribution, clearAttribution } from "@/lib/leadMeta";
 import { LEGAL_DOCS } from "@/lib/legalContent";
 import styles from "./CookieConsent.module.css";
 
@@ -17,8 +17,8 @@ const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
  * corresponding NEXT_PUBLIC_* id is configured, so nothing third-party runs
  * until both an id exists and the visitor has accepted.
  *
- * Google Tag Manager is separate: it is always on the page and hears about the
- * decision through updateConsentMode() instead — see lib/gtm.ts.
+ * Google Tag Manager is separate: the head script loads it for returning
+ * visitors who accepted, and loadGtm() does so on an accept here — see lib/gtm.ts.
  */
 function loadAnalytics() {
   if (typeof window === "undefined" || window.__apexAnalyticsLoaded) return;
@@ -52,14 +52,25 @@ export default function CookieConsent() {
   );
   const [manualOpen, setManualOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [analyticsOn, setAnalyticsOn] = useState(true);
+  // Unticked by default: a pre-ticked box is not valid consent. Opening the
+  // settings re-reads the stored choice, so they always show the real state.
+  const [analyticsOn, setAnalyticsOn] = useState(false);
   const open = manualOpen || consentPending;
 
   useEffect(() => {
-    // Load analytics on a fresh page view if the visitor previously accepted.
-    if (hasConsent()) loadAnalytics();
+    // Fresh page view for a visitor who previously accepted: GTM is already
+    // loading from the head script; add gtag.js and this session's attribution.
+    if (hasConsent()) {
+      captureAttribution();
+      loadAnalytics();
+    } else {
+      // Without consent nothing of Google's may stay behind — including
+      // identifiers left by earlier site versions, which loaded GTM regardless.
+      clearGoogleStorage();
+    }
     const reopen = () => {
       setShowSettings(false);
+      setAnalyticsOn(hasConsent());
       setManualOpen(true);
     };
     window.addEventListener("apexgold-consent-open", reopen);
@@ -70,16 +81,24 @@ export default function CookieConsent() {
     setConsent("granted");
     captureAttribution();
     updateConsentMode("granted");
+    loadGtm();
     loadAnalytics();
     setManualOpen(false);
   }, []);
 
   const reject = useCallback(() => {
+    const withdrawing = hasConsent();
     setConsent("denied");
-    // Consent Mode already defaults to denied; the explicit update is what
-    // releases tags waiting on wait_for_update instead of stalling them.
+    // Stops any tag that is already running from writing new identifiers.
     updateConsentMode("denied");
+    // ...and drop the ones written while consent was granted.
+    clearGoogleStorage();
+    clearAttribution();
     setManualOpen(false);
+    // Tags loaded under the earlier "accept" keep running for the rest of the
+    // page (cookieless pings, call tracking). A reload is the only way to
+    // unload them; the head script then leaves GTM out.
+    if (withdrawing) window.location.reload();
   }, []);
 
   const saveSettings = useCallback(() => {
@@ -153,7 +172,10 @@ export default function CookieConsent() {
               </button>
             </>
           )}
-          <button type="button" className={styles.ghost} onClick={() => setShowSettings((s) => !s)}>
+          <button type="button" className={styles.ghost} onClick={() => {
+              if (!showSettings) setAnalyticsOn(hasConsent());
+              setShowSettings((s) => !s);
+            }}>
             {t("Nastavení", "Settings", "Nastavenie", "Налаштування")}
           </button>
         </div>

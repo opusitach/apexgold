@@ -65,6 +65,15 @@ export function captureAttribution(): void {
   }
 }
 
+/** Drop captured attribution — used when the visitor withdraws consent. */
+export function clearAttribution(): void {
+  try {
+    sessionStorage.removeItem(ATTR_KEY);
+  } catch {
+    // storage unavailable — nothing was captured
+  }
+}
+
 function readAttribution(): Attribution {
   const empty: Attribution = {
     utmSource: "",

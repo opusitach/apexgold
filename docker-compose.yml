@@ -2,9 +2,10 @@
 #
 #   docker compose up -d --build
 #
-# Two services: `app` is the Next.js server (site, API routes, admin panel and
-# the SQLite file), `webserver` is Caddy terminating TLS in front of it. Only
-# Caddy publishes ports — the app is reachable solely over the internal network.
+# `app` is the Next.js server (site, API routes, admin panel and the SQLite
+# file). TLS is terminated by the shared Caddy in /home/ubuntu/infra-websites,
+# which reaches the app over the external `edge` network as `apexgold-app`.
+# The app publishes no ports to the host.
 
 services:
   app:
@@ -47,30 +48,10 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - web
-
-  webserver:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      app:
-        condition: service_healthy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp" # HTTP/3
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # Issued certificates live here — without these volumes every rebuild
-      # would request new ones and hit the Let's Encrypt rate limit.
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - web
-
-volumes:
-  caddy_data:
-  caddy_config:
+      edge:
+        aliases:
+          - apexgold-app # must match reverse_proxy in infra-websites/caddy/Caddyfile
 
 networks:
-  web:
+  edge:
+    external: true

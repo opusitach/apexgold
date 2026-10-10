@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LanguageProvider } from "@/lib/i18n";
 import CookieConsent from "@/components/CookieConsent";
-import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/GoogleTagManager";
+import { GoogleTagManagerScript } from "@/components/GoogleTagManager";
 import { LOCALES, isLang, type Lang } from "@/lib/locales";
 import { SITE_URL, localeAlternates, socialMeta, verificationMeta } from "@/lib/siteMeta";
 // Fonts ship from node_modules rather than next/font/google: Turbopack fails the
@@ -69,7 +69,6 @@ export default async function RootLayout({
         <GoogleTagManagerScript />
       </head>
       <body>
-        <GoogleTagManagerNoScript />
         <LanguageProvider lang={lang}>
           {children}
           <CookieConsent />

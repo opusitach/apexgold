@@ -1,10 +1,13 @@
 // Google Tag Manager container for apexgold.cz.
 //
-// Unlike the gtag.js snippet in components/CookieConsent.tsx, the container is
-// loaded on every page view — it has to be, or GTM cannot react to the consent
-// decision at all. What keeps that lawful is Consent Mode v2: the init script
-// below denies every storage signal *before* gtm.js runs, so no analytics or
-// advertising identifier is written until the visitor accepts in the banner.
+// The container is loaded only once the visitor has accepted (Consent Mode
+// "basic"). Loading it up front and relying on denied Consent Mode signals is
+// not enough: GA4 and Google Ads inside it still send cookieless page_view
+// pings (with gclid and the page URL), and the Ads call-tracking tag writes the
+// gclid into localStorage — all for visitors who have rejected cookies.
+//
+// The Consent Mode defaults are still declared first, so every tag that runs
+// after an accept sees an explicit consent state.
 
 import type { ConsentValue } from "./consent";
 
@@ -30,6 +33,7 @@ declare global {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
     __apexAnalyticsLoaded?: boolean;
+    __apexGtmLoaded?: boolean;
   }
 }
 
@@ -62,10 +66,25 @@ export function updateConsentMode(value: ConsentValue): void {
 }
 
 /**
- * Inline head script: consent defaults first, then the container loader. Both
- * live in one <script> so their order cannot be reshuffled. The localStorage
- * read replays an earlier "accept" before gtm.js starts, which spares returning
- * visitors a page view measured under denied consent.
+ * Load the container after the visitor accepts on this page view — the same
+ * steps as the loader in gtmInitScript(), which covers returning visitors.
+ */
+export function loadGtm(): void {
+  if (typeof window === "undefined" || window.__apexGtmLoaded || !GTM_ID) return;
+  window.__apexGtmLoaded = true;
+  ensureGtag();
+  window.dataLayer!.push({ "gtm.start": Date.now(), event: "gtm.js" });
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`;
+  document.head.appendChild(s);
+}
+
+/**
+ * Inline head script: consent defaults first, then — only for a visitor who
+ * accepted earlier — the consent update and the container loader. All of it
+ * lives in one <script> so the order cannot be reshuffled. Everyone else gets
+ * the container from loadGtm() once they accept in the banner.
  */
 export function gtmInitScript(gtmId: string): string {
   const denied = JSON.stringify({
@@ -80,10 +99,42 @@ export function gtmInitScript(gtmId: string): string {
 function gtag(){dataLayer.push(arguments)}
 window.gtag=gtag;
 gtag('consent','default',${denied});
-try{if(localStorage.getItem(${JSON.stringify(CONSENT_KEY)})==='granted'){gtag('consent','update',${granted})}}catch(e){}
+var ok=false;
+try{ok=localStorage.getItem(${JSON.stringify(CONSENT_KEY)})==='granted'}catch(e){}
+if(ok){gtag('consent','update',${granted});
+window.__apexGtmLoaded=true;
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer',${JSON.stringify(gtmId)});`;
+})(window,document,'script','dataLayer',${JSON.stringify(gtmId)});}`;
+}
+
+/** Cookies Google's tags write: GA (_ga, _gid, _gat), Ads (_gcl_*, _gac_*), AdSense. */
+const GOOGLE_COOKIE = /^(_ga|_gid|_gat|_gcl_|_gac_|__gads|__gpi|__eoi)/;
+/** localStorage written by the Ads tags: _gcl_ls and call-tracking ("<label>,<number>"). */
+const GOOGLE_STORAGE = /^(_gcl_|_ga)|^[\w-]+,\d+(_expiresAt)?$/;
+
+/**
+ * Remove the identifiers Google's tags stored while consent was granted.
+ * Consent Mode only stops new writes; the existing _ga / _gcl_* cookies would
+ * otherwise keep identifying the visitor after they withdraw consent.
+ */
+export function clearGoogleStorage(): void {
+  if (typeof window === "undefined") return;
+  // The tags set cookies on the widest domain they can (e.g. .apexgold.cz), so
+  // expire each one on the host and on every parent domain.
+  const parts = window.location.hostname.split(".");
+  const domains = [""];
+  for (let i = 0; i < parts.length - 1; i++) domains.push(`; domain=.${parts.slice(i).join(".")}`);
+  for (const c of document.cookie.split(";")) {
+    const name = c.split("=")[0].trim();
+    if (!GOOGLE_COOKIE.test(name)) continue;
+    for (const d of domains) document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${d}`;
+  }
+  try {
+    for (const k of Object.keys(localStorage)) if (GOOGLE_STORAGE.test(k)) localStorage.removeItem(k);
+  } catch {
+    // storage unavailable — nothing was stored there either
+  }
 }

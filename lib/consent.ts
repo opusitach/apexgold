@@ -41,12 +41,22 @@ export function setConsent(value: ConsentValue): void {
   }
 }
 
-/** Subscribe to consent changes. Returns an unsubscribe function. */
-export function onConsentChange(cb: (value: ConsentValue) => void): () => void {
+/**
+ * Subscribe to consent changes, including ones made in another tab. Returns an
+ * unsubscribe function.
+ */
+export function onConsentChange(cb: (value: ConsentValue | null) => void): () => void {
   if (typeof window === "undefined") return () => {};
   const handler = (e: Event) => cb((e as CustomEvent<ConsentValue>).detail);
+  const storageHandler = (e: StorageEvent) => {
+    if (e.key === KEY || e.key === null) cb(getConsent());
+  };
   window.addEventListener(EVENT, handler);
-  return () => window.removeEventListener(EVENT, handler);
+  window.addEventListener("storage", storageHandler);
+  return () => {
+    window.removeEventListener(EVENT, handler);
+    window.removeEventListener("storage", storageHandler);
+  };
 }
 
 /** Re-open the cookie banner from anywhere (e.g. a footer "Cookie settings" link). */

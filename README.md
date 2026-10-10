@@ -14,10 +14,11 @@ The site is localized (`app/[lang]/`) and the admin panel lives under `app/admin
 
 ## Deploying with Docker
 
-Production runs as two containers (`docker-compose.yml`):
+Production runs as a single container (`docker-compose.yml`):
 
 - **`app`** — the Next.js server (site, API routes, admin panel, SQLite), built from `Dockerfile` as a `output: "standalone"` bundle on `node:24-alpine`. Node 24 is the floor because `lib/db.ts` uses the built-in `node:sqlite` module. Not published to the host.
-- **`webserver`** — Caddy on ports 80/443 (+443/udp for HTTP/3). It terminates TLS with automatic Let's Encrypt certificates and proxies to `app:3000` (`Caddyfile`).
+
+TLS, the `www` redirect and the `admin.apexgold.cz` mapping live in the shared Caddy of the [infra-websites](https://github.com/opusitach/infra-websites) repo (`/home/ubuntu/infra-websites` on the server). It reaches the app over the external `edge` docker network as `apexgold-app:3000`, so that network has to exist before the first `docker compose up` (`make network` in infra-websites).
 
 ### 1. Prerequisites
 
@@ -71,7 +72,7 @@ jq -s '(map(select(.event=="stored").ref)) as $ok | map(select(.event=="received
 docker compose up -d --build
 ```
 
-`docker compose ps` should show `app` as `healthy` (the healthcheck hits `/api/health`) and `webserver` running. Watch certificate issuance with `docker compose logs -f webserver`.
+`docker compose ps` should show `app` as `healthy` (the healthcheck hits `/api/health`). Certificate issuance is watched from infra-websites (`make logs`).
 
 ### 5. Telegram webhook
 
@@ -93,7 +94,7 @@ docker run --rm -v "$PWD:/app" -w /app --user "$(id -u):$(id -g)" node:24-alpine
 docker compose up -d --build
 ```
 
-redeploys after a `git pull`. `docker compose logs -f app` tails the app, and `docker compose restart webserver` reloads Caddy after editing the `Caddyfile`. Issued certificates persist in the `caddy_data` volume, so rebuilds do not re-request them.
+redeploys after a `git pull`. `docker compose logs -f app` tails the app. Web server changes (domains, redirects, headers) are made in infra-websites and applied there with `make reload`.
 
 ## Continuous deployment
 
@@ -157,7 +158,7 @@ There is no automatic rollback. If the build fails the old containers keep servi
 
 Everything a crawler needs is generated from the page data, so there is nothing to maintain by hand:
 
-- `app/robots.ts` → `/robots.txt`, allowing everything except `/admin` and `/api/`, and pointing at the sitemap. `admin.apexgold.cz` serves its own `Disallow: /` from the `Caddyfile`.
+- `app/robots.ts` → `/robots.txt`, allowing everything except `/admin` and `/api/`, and pointing at the sitemap. `admin.apexgold.cz` serves its own `Disallow: /` (plus `X-Robots-Tag: noindex`) from the Caddyfile in infra-websites.
 - `app/sitemap.ts` → `/sitemap.xml`: 13 pages × 4 locales, each with its `hreflang` alternates and the photos that page renders (Google Images crawls those). Its `lastmod` comes from the `CONTENT_REVISED` constant — **bump it when the copy actually changes**, not on every deploy, or search engines learn to ignore the field.
 - `lib/siteMeta.ts` → canonical URL, `hreflang`, Open Graph and Twitter cards for every page.
 - `lib/schema.ts` → the JSON-LD graph (`LocalBusiness`, `WebSite`, `Service`, `Offer`, `FAQPage`, `BreadcrumbList`), all pointing at one business entity by `@id`.
@@ -190,7 +191,7 @@ KEY=$(openssl rand -hex 16); printf %s "$KEY" > public/$KEY.txt
 
 ## Running without Docker
 
-The app also runs as a plain Node process — `npm run build && npm run start` on **Node 24+**, with the same environment variables in `.env.local` and a reverse proxy in front (change `app:3000` back to `localhost:3000` in the `Caddyfile`).
+The app also runs as a plain Node process — `npm run build && npm run start` on **Node 24+**, with the same environment variables in `.env.local` and a reverse proxy in front (point `reverse_proxy` in the infra-websites Caddyfile at `localhost:3000` instead of `apexgold-app:3000`).
 
 ## Learn More
 
